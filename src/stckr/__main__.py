@@ -46,6 +46,8 @@ def main():
         except Exception as error:
             parser.exit(1, f"\nFehler: {error}\n")
         return
+    from PySide6.QtQuickControls2 import QQuickStyle
+    QQuickStyle.setStyle("Basic")
     from PySide6.QtWidgets import QApplication
     from PySide6.QtQml import QQmlApplicationEngine, qmlRegisterType
     from PySide6.QtCore import QUrl
@@ -75,7 +77,10 @@ def main():
         timer.timeout.connect(complete)
         timer.start(100)
         QTimer.singleShot(60000, lambda: app.exit(2))
-    return app.exec()
+    code = app.exec()
+    import shiboken6
+    shiboken6.delete(engine)
+    return code
 
 
 if __name__ == "__main__":

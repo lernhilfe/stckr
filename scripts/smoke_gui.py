@@ -18,6 +18,8 @@ def main():
         if "Error" in message or "failed" in message or "is not" in message or "Cannot" in message:
             errors.append(message)
     qInstallMessageHandler(log)
+    from PySide6.QtQuickControls2 import QQuickStyle
+    QQuickStyle.setStyle("Basic")
     app = QApplication([])
     app.setApplicationName("STCKR-Smoke")
     app.setOrganizationName("STCKR")
@@ -48,6 +50,8 @@ def main():
     QTimer.singleShot(1500, finish)
     app.exec()
     backend.shutdown()
+    import shiboken6
+    shiboken6.delete(engine)
     assert not errors, "\n".join(errors)
     print("GUI smoke passed")
 

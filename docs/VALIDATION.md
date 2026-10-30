@@ -4,7 +4,7 @@ Stand: 30. Oktober 2026. Die nachfolgenden Messungen beziehen sich auf die hier 
 
 ## Tatsächlich ausgeführt
 
-- **20 automatisierte Tests bestanden**: alle drei Fusionen gegen synthetische scharfe Zielbilder, konstante Flächen, Subpixel-Registrierung, garantiert gültiger Beschnitt, DNG-Tags und numerischer Roundtrip über LibRaw, 16-Bit-TIFF-Präzision, atomarer Export, überlappende Pinselstriche, persistentes Undo/Redo, Projekttransport, Abbruch, Größenkonflikte und Windows-kompatibler `spawn`-Worker.
+- **22 automatisierte Tests bestanden**: alle drei Fusionen gegen synthetische scharfe Zielbilder, konstante Flächen, Subpixel-Registrierung, garantiert gültiger Beschnitt, DNG-Tags und numerischer Roundtrip über LibRaw, 16-Bit-TIFF-Präzision, atomarer Export, überlappende Pinselstriche, persistentes Undo/Redo, Projekttransport, Abbruch, Größenkonflikte Windows-kompatibler `spawn`-Worker sowie vollständige Bereinigung bei vollem Datenträger und bei Abbruch während der Fusion.
 - **Ruff-Prüfung bestanden** für Engine, Oberfläche, Tests und Skripte.
 - **GUI-Smoke bestanden**: tatsächliche QML-Oberfläche geladen und gerendert, leere Ansicht und gefüllte Arbeitsfläche als Screenshots geprüft. Zusätzlicher GUI-Smoke mit echtem Worker-Prozess.
 - **Echte EOS-M50-Daten**: `IMG_0482_raw.CR3` und `IMG_0483_craw.CR3` aus `lclevy/canon_cr3`, Commit `151c1a965775ef409ace17714c24ed491cfcf9c4`. Zusätzlich `canon_eos_m50_02.cr3` decodiert. Keine dieser Fotografien wird mit STCKR verteilt.

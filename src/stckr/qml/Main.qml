@@ -267,6 +267,7 @@ ApplicationWindow {
                                 visible: window.advanced; spacing: 4
                                 CheckBox { id: affine; text: "Affine Ausrichtung"; palette.windowText: "#a6bcc7"; font.pixelSize: 11; enabled: !studio.busy && alignment.checked }
                                 CheckBox { id: refSelected; text: "Gewählte Quelle als Referenz"; palette.windowText: "#a6bcc7"; font.pixelSize: 11; enabled: !studio.busy && alignment.checked }
+                                ActionButton { text: "Cache-Ordner auf SSD wählen"; enabled: !studio.busy; onClicked: studio.chooseCacheFolder() }
                                 Text { text: "Standard: mittleres Bild, Rotation,\nVerschiebung und Focus Breathing."; color: "#728f9e"; font.pixelSize: 10; lineHeight: 1.4 }
                             }
                             Text { text: "Volle Auflösung · Lineare Verarbeitung\nOriginaldateien bleiben unverändert."; color: "#6f8b9a"; font.pixelSize: 10; lineHeight: 1.5; Layout.fillWidth: true }

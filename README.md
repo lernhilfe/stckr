@@ -58,7 +58,7 @@ Unter PowerShell Dateinamen einzeln angeben; Wildcards werden dort von Python ni
 
 Ausgelegt auf 16 GB RAM und bis zu 100 × 24 MP. Dateien werden nacheinander decodiert; die komplette Serie liegt nie als Float32-Array im RAM. Standardmäßiger Engine-Rahmen 4096 MB, höchstens vier OpenCV-Threads. Dekodierte und ausgerichtete lineare Daten liegen als speicherabgebildete `.npy`-Dateien im lokalen Cache. **Für 100 Bilder können einschließlich Ergebnissen mehr als 60 GB freier SSD-Speicher nötig sein.** Weitere Varianten benötigen zusätzlichen Platz. Projekte kopieren die ausgewählten Ergebnisdaten und sind entsprechend groß.
 
-Der Cache liegt im Qt-Anwendungscache (`STCKR/STCKR/sessions`). Er bleibt zum Schutz ungespeicherter Ergebnisse nach dem Beenden erhalten und kann nach dem Speichern der Projekte im Dateimanager gelöscht werden. Originaldateien werden nie verändert. Retuschierhistorien sind im Projekt persistent; ein unterbrochener laufender Pinselstrich ist keine abgeschlossene Undo-Transaktion.
+Unter **Expertenoptionen → Cache-Ordner auf SSD wählen** lässt sich das Laufwerk für neue Stacks ändern; bestehende Ergebnisse bleiben erhalten. Alternativ setzt `STCKR_CACHE_DIR` den Speicherort beim Start. Standardmäßig liegt der Cache im Qt-Anwendungscache (`STCKR/STCKR/sessions`). Er bleibt zum Schutz ungespeicherter Ergebnisse nach dem Beenden erhalten und kann nach dem Speichern der Projekte im Dateimanager gelöscht werden. Originaldateien werden nie verändert. Retuschierhistorien sind im Projekt persistent; ein unterbrochener laufender Pinselstrich ist keine abgeschlossene Undo-Transaktion.
 
 ## Tests und Builds
 

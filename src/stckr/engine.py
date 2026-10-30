@@ -69,6 +69,9 @@ def run_stack(sources, settings: Settings, cache_root, progress=lambda *a: None,
             decoded.append(str(target))
             colors.append(color)
             progress("RAW dekodieren / Import", .3 * (i + 1) / len(sources))
+        pending_bytes = int(np.prod(shape)) * 4 * (len(sources) + 3)
+        if shutil.disk_usage(cache_root).free < pending_bytes:
+            raise ValueError(f"Zu wenig freier SSD-Speicher für die ausgerichteten Bilder: ca. {pending_bytes / 2**30:.1f} GB nötig.")
         h, w = shape[:2]
         ref = len(sources) // 2 if settings.reference < 0 else settings.reference
         if not 0 <= ref < len(sources):

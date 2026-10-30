@@ -5,11 +5,12 @@ from dataclasses import asdict
 from pathlib import Path
 from queue import Empty, SimpleQueue
 import multiprocessing as mp
+import os
+import uuid
 import re
-import time
 import numpy as np
 from PIL import Image
-from PySide6.QtCore import QObject, Property, Signal, Slot, QTimer, QUrl, QStandardPaths
+from PySide6.QtCore import QObject, Property, Signal, Slot, QTimer, QUrl, QStandardPaths, QSettings
 from PySide6.QtWidgets import QFileDialog
 
 from .canvas import PhotoCanvas, ViewState
@@ -43,9 +44,12 @@ class Backend(QObject):
         self.color_info = ColorInfo()
         self.retoucher = None
         self.view_state = ViewState()
-        self.root = Path(QStandardPaths.writableLocation(QStandardPaths.CacheLocation)) / "sessions"
+        self.preferences = QSettings()
+        cache_base = (os.environ.get("STCKR_CACHE_DIR") or self.preferences.value("cacheRoot", "")
+                      or QStandardPaths.writableLocation(QStandardPaths.CacheLocation))
+        self.root = Path(cache_base) / "sessions"
         self.root.mkdir(parents=True, exist_ok=True)
-        self.cache = self.root / str(int(time.time()))
+        self.cache = self.root / uuid.uuid4().hex[:12]
         self.cache.mkdir(exist_ok=True)
         self.pool = ThreadPoolExecutor(max_workers=1)
         self.thumbnail_pool = ThreadPoolExecutor(max_workers=1)
@@ -146,6 +150,22 @@ class Backend(QObject):
             except Exception as error:
                 self.messages.put(("error", str(error), busy_task))
         self.pool.submit(execute)
+
+    @Slot()
+    def chooseCacheFolder(self):
+        if self._busy:
+            return
+        directory = QFileDialog.getExistingDirectory(None, "SSD-Ordner für neue Stacks wählen", str(self.root.parent))
+        if directory:
+            try:
+                root = Path(directory) / "sessions"
+                cache = root / uuid.uuid4().hex[:12]
+                cache.mkdir(parents=True)
+                self.root, self.cache = root, cache
+                self.preferences.setValue("cacheRoot", directory)
+                self.noteRaised.emit("Neue Stacks werden auf der gewählten SSD gespeichert. Bestehende Ergebnisse bleiben erhalten.")
+            except OSError as error:
+                self.errorRaised.emit(str(error))
 
     @Slot()
     def chooseFiles(self):

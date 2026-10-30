@@ -192,3 +192,33 @@ def test_project_path_escape_rejected(tmp_path):
     (tmp_path / "project.json").write_text(json.dumps({"version": 1, "sources": [], "results": [{"directory": "../../escape"}]}))
     with pytest.raises(ValueError, match="Ergebnispfad"):
         load_project(tmp_path)
+
+
+def test_low_disk_space_leaves_no_partial_result(tmp_path, monkeypatch):
+    from collections import namedtuple
+    import stckr.engine
+    Disk = namedtuple('Disk', 'total used free')
+    monkeypatch.setattr(stckr.engine.shutil, 'disk_usage', lambda path: Disk(100, 100, 0))
+    files = []
+    for i in range(2):
+        p = tmp_path / f'source{i}.png'
+        Image.fromarray(np.zeros((32,32,3),np.uint8)).save(p)
+        files.append(str(p))
+    with pytest.raises(ValueError, match='Platz'):
+        run_stack(files, Settings(align=False), tmp_path/'cache')
+    assert not list((tmp_path/'cache'/'results').iterdir())
+
+
+def test_cancellation_during_fusion_cleans_job(tmp_path):
+    files = []
+    for i in range(3):
+        p = tmp_path / f'source{i}.png'
+        Image.fromarray(np.full((32,32,3),70+i,np.uint8)).save(p)
+        files.append(str(p))
+    cancel = Event()
+    def progress(phase, value):
+        if value > .65:
+            cancel.set()
+    with pytest.raises(Cancelled):
+        run_stack(files, Settings(align=False), tmp_path/'cache', progress, cancel)
+    assert not list((tmp_path/'cache'/'results').iterdir())

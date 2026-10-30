@@ -6,7 +6,7 @@
 
 ## Starten
 
-Windows 10/11, 64-Bit. Das portable Paket aus den GitHub-Actions-Builds entpacken und `STCKR.exe` starten. Der vollständige Ordner muss zusammenbleiben. Python und Adobe DNG Converter werden nicht benötigt. Die Pakete sind noch nicht codesigniert.
+Windows 10/11, 64-Bit. Das neue Paket **STCKR-Windows-portable-x64** aus den GitHub-Actions-Builds vollständig entpacken und **`STCKR.cmd`** starten. Der vollständige Ordner muss zusammenbleiben. Python und Adobe DNG Converter werden nicht benötigt. Der originale Python-Interpreter behält seine geprüfte Signatur; STCKRs Anwendungscode ist nicht codesigniert. Der Windows-Build prüft das komplette Paket vor dem Upload mit Microsoft Defender. [Details zur Paketierung und zur gemeldeten Virenerkennung](docs/WINDOWS-PACKAGING.md).
 
 Aus dem Quellcode mit Python 3.12 und [uv](https://docs.astral.sh/uv/):
 
@@ -68,7 +68,8 @@ uv run ruff check src tests scripts
 uv run python scripts/smoke_gui.py
 uv run python scripts/benchmark.py --frames 100 --width 6000 --height 4000
 uv run python scripts/vendor_exiftool.py
-uv run pyinstaller STCKR.spec --noconfirm
+python scripts/build_portable.py  # Windows, mit Standard-CPython 3.13
+# Linux-Entwicklungsbuild: uv run pyinstaller STCKR.spec --noconfirm
 ```
 
 Windows- und Linux-CI führen Engine-, DNG- und GUI-Smoke-Tests aus. Der Windows-Job erzeugt ein portables Anwendungspaket. Details und tatsächlich ausgeführte Prüfungen: [docs/VALIDATION.md](docs/VALIDATION.md).

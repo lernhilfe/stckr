@@ -1,0 +1,37 @@
+name: Audit originally reported Windows package
+on:
+  push:
+    paths: ['.github/workflows/audit-original.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  audit:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download the exact original artifact (never execute it)
+        uses: actions/download-artifact@v4
+        with:
+          name: STCKR-Windows-x64
+          run-id: 41085697425
+          github-token: ${{ github.token }}
+          path: original-package
+      - name: Document original binary hash and signature
+        shell: pwsh
+        run: |
+          $file = 'original-package/STCKR.exe'
+          $signature = Get-AuthenticodeSignature $file
+          @{ sha256 = (Get-FileHash -Algorithm SHA256 $file).Hash; signature = [string]$signature.Status; originalRun = 41085697425 } |
+            ConvertTo-Json | Set-Content original-binary.json
+      - name: Scan original artifact without executing it
+        shell: pwsh
+        run: ./scripts/scan_windows.ps1 -PackagePath original-package -ReportPath original-defender-scan.json -AllowDetections
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Original-Windows-security-audit
+          path: |
+            original-binary.json
+            original-defender-scan.json

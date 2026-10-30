@@ -51,15 +51,36 @@ jobs:
         run: |
           uv run python scripts/vendor_exiftool.py
           uv run python scripts/collect_licenses.py
-      - name: Build portable Windows app
+      - uses: actions/setup-python@v6
         if: runner.os == 'Windows'
-        run: uv run pyinstaller STCKR.spec --noconfirm
+        with:
+          python-version: '3.13'
+          architecture: 'x64'
+      - name: Build transparent application-local Python package
+        if: runner.os == 'Windows'
+        run: python scripts/build_portable.py
+      - name: Verify original Python signatures
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: ./scripts/check_signatures.ps1
+
       - name: Test packaged worker and DNG path
         if: runner.os == 'Windows'
         run: uv run python scripts/smoke_packaged.py
+      - name: Scan complete package with Microsoft Defender
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: ./scripts/scan_windows.ps1 -PackagePath dist/STCKR -ReportPath defender-scan.json
+      - uses: actions/upload-artifact@v4
+        if: runner.os == 'Windows' && always()
+        with:
+          name: Windows-security-report
+          path: |
+            defender-scan.json
+            interpreter-signatures.json
       - uses: actions/upload-artifact@v4
         if: runner.os == 'Windows'
         with:
-          name: STCKR-Windows-x64
+          name: STCKR-Windows-portable-x64
           path: dist/STCKR/
           retention-days: 30

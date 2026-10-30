@@ -21,11 +21,32 @@ def focus_measure(image, radius):
 
 
 def fuse(paths, settings, progress=lambda *a: None, cancel=None, output_path=None):
+    # Tracebacks retain local arrays after an exception. Windows cannot unlink an
+    # open mapping, so close live mappings explicitly before the engine removes a job.
+    # Weak references avoid pinning every source frame in memory during long stacks.
+    import weakref
+    references = []
+    def mapped(path, output_shape=None):
+        array = (np.load(path, mmap_mode="r") if output_shape is None else
+                 np.lib.format.open_memmap(path, mode="w+", dtype=np.float32, shape=output_shape))
+        references.append(weakref.ref(array))
+        return array
+    try:
+        return _fuse(paths, settings, progress, cancel, output_path, mapped)
+    except BaseException:
+        for reference in references:
+            array = reference()
+            if array is not None and getattr(array, "_mmap", None) is not None:
+                array._mmap.close()
+        raise
+
+
+def _fuse(paths, settings, progress, cancel, output_path, mapped):
     """paths are linear RGB .npy files; returns RGB and a source-index map."""
-    first = np.load(paths[0], mmap_mode="r")
+    first = mapped(paths[0])
     h, w = first.shape[:2]
     count = len(paths)
-    output = (np.lib.format.open_memmap(output_path, mode="w+", dtype=np.float32, shape=first.shape)
+    output = (mapped(output_path, first.shape)
               if output_path else np.empty(first.shape, np.float32))
     winner = np.zeros((h, w), np.uint16 if count < 65536 else np.uint32)
     best = np.full((h, w), -1., np.float32)
@@ -36,7 +57,7 @@ def fuse(paths, settings, progress=lambda *a: None, cancel=None, output_path=Non
             total = np.zeros((h, w), np.float32)
         for i, path in enumerate(paths):
             check_cancel(cancel)
-            image = np.load(path, mmap_mode="r")
+            image = mapped(path)
             score = focus_measure(image, settings.radius)
             selected = score > best
             best[selected], winner[selected] = score[selected], i
@@ -56,12 +77,12 @@ def fuse(paths, settings, progress=lambda *a: None, cancel=None, output_path=Non
             depth = cv2.medianBlur(winner.astype(np.float32), 3)
             if sigma > 0:
                 # Joint bilateral filtering prevents depth averaging across visible object edges.
-                guide = luminance(np.load(paths[count // 2], mmap_mode="r"))
+                guide = luminance(mapped(paths[count // 2]))
                 depth = guided_depth(guide, depth, settings.radius, sigma)
             depth = np.clip(np.rint(depth), 0, count - 1).astype(winner.dtype)
             for i, path in enumerate(paths):
                 check_cancel(cancel)
-                image = np.load(path, mmap_mode="r")
+                image = mapped(path)
                 for y in range(0, h, 256):
                     selected = depth[y:y + 256] == i
                     output[y:y + 256][selected] = image[y:y + 256][selected]
@@ -71,7 +92,7 @@ def fuse(paths, settings, progress=lambda *a: None, cancel=None, output_path=Non
         bands, energies = [], []
         for i, path in enumerate(paths):
             check_cancel(cancel)
-            image = np.load(path, mmap_mode="r")
+            image = mapped(path)
             gauss = [np.asarray(image)]
             for _ in range(levels - 1):
                 gauss.append(cv2.pyrDown(gauss[-1]))

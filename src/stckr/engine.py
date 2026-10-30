@@ -38,6 +38,7 @@ def run_stack(sources, settings: Settings, cache_root, progress=lambda *a: None,
     job.mkdir(parents=True)
     decoded, colors = [], []
     shape = None
+    image = None
     try:
         for i, source in enumerate(sources):
             check_cancel(cancel)
@@ -123,6 +124,8 @@ def run_stack(sources, settings: Settings, cache_root, progress=lambda *a: None,
         progress("Fertig", 1.)
         return result
     except BaseException:
+        if isinstance(image, np.memmap) and getattr(image, "_mmap", None) is not None:
+            image._mmap.close()
         shutil.rmtree(job, ignore_errors=True)
         raise
 

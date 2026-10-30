@@ -1,0 +1,65 @@
+name: Test and build STCKR
+on:
+  push:
+    branches: [main, work]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    env:
+      QT_QPA_PLATFORM: offscreen
+      QT_QUICK_BACKEND: software
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: '0.12.23'
+          enable-cache: true
+      - name: Qt system libraries
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libegl1 libopengl0 libxkbcommon0 libgl1
+      - run: uv sync --frozen --extra dev --python 3.12
+      - run: uv run ruff check src tests scripts
+      - run: uv run pytest -q
+      - name: Real M50 RAW/C-RAW and Adobe DNG validation
+        if: runner.os == 'Linux'
+        run: |
+          git clone https://github.com/lclevy/canon_cr3.git /tmp/canon-cr3
+          git -C /tmp/canon-cr3 checkout 151c1a965775ef409ace17714c24ed491cfcf9c4
+          git clone https://github.com/emmcb/adobe-dng-sdk.git /tmp/dng-sdk
+          git -C /tmp/dng-sdk checkout 962a7028efdc8f8a651cf6335c3ec53053472339
+          cmake -S /tmp/dng-sdk -B /tmp/dng-build -DDNG_WITH_JPEG=OFF -DDNG_WITH_XMP=OFF
+          cmake --build /tmp/dng-build --target dng-validate -j4
+          uv run python scripts/vendor_exiftool.py
+          uv run python scripts/validate_raw.py /tmp/canon-cr3/samples /tmp/validation --validator /tmp/dng-build/dng-validate
+
+      - run: uv run python scripts/smoke_gui.py --demo --screenshot ui-preview.png
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ui-${{ runner.os }}
+          path: ui-preview.png
+      - name: Bundle ExifTool and notices
+        if: runner.os == 'Windows'
+        run: |
+          uv run python scripts/vendor_exiftool.py
+          uv run python scripts/collect_licenses.py
+      - name: Build portable Windows app
+        if: runner.os == 'Windows'
+        run: uv run pyinstaller STCKR.spec --noconfirm
+      - name: Test packaged worker and DNG path
+        if: runner.os == 'Windows'
+        run: uv run python scripts/smoke_packaged.py
+      - uses: actions/upload-artifact@v4
+        if: runner.os == 'Windows'
+        with:
+          name: STCKR-Windows-x64
+          path: dist/STCKR/
+          retention-days: 30

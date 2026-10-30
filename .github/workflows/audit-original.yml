@@ -26,7 +26,7 @@ jobs:
           @{ sha256 = (Get-FileHash -Algorithm SHA256 $file).Hash; signature = [string]$signature.Status; originalRun = 41085697425 } |
             ConvertTo-Json | Set-Content original-binary.json
       - name: Scan original artifact without executing it
-        shell: pwsh
+        shell: powershell
         run: ./scripts/scan_windows.ps1 -PackagePath original-package -ReportPath original-defender-scan.json -AllowDetections
       - uses: actions/upload-artifact@v4
         if: always()

@@ -69,7 +69,7 @@ jobs:
         run: uv run python scripts/smoke_packaged.py
       - name: Scan complete package with Microsoft Defender
         if: runner.os == 'Windows'
-        shell: pwsh
+        shell: powershell
         run: ./scripts/scan_windows.ps1 -PackagePath dist/STCKR -ReportPath defender-scan.json
       - uses: actions/upload-artifact@v4
         if: runner.os == 'Windows' && always()
